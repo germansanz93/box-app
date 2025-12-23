@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1034878959108",
+    "project_id": "three-bits",
+    "storage_bucket": "three-bits.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1034878959108:android:69a753494fe59a5188ff51",
+        "android_client_info": {
+          "package_name": "com.u11b.box_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCM8WMoxJgTsFU_HavOqD3iqqHUj8FseVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

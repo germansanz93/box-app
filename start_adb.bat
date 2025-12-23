@@ -1,0 +1,6 @@
+@echo off
+echo Killing existing ADB server...
+adb kill-server
+echo Starting ADB server on all interfaces...
+adb -a -P 5037 nodaemon server
+pause
