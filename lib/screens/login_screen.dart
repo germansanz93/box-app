@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/box_branding.dart';
+import '../providers/branding_provider.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
 
@@ -18,6 +21,16 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMessage;
 
   @override
+  void initState() {
+    super.initState();
+    // Enforce neutral branding when on Login Screen
+    // We use postFrameCallback to avoid error during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<BrandingProvider>(context, listen: false).resetToDefault();
+    });
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -31,10 +44,20 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = null;
       });
       try {
-        await _auth.signInWithEmailAndPassword(
+        final credential = await _auth.signInWithEmailAndPassword(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
+
+        if (credential?.user != null) {
+          final boxId = await _auth.getUserBoxId(credential!.user!.uid);
+          if (boxId != null && mounted) {
+             // Apply Branding via Provider
+             await Provider.of<BrandingProvider>(context, listen: false)
+                 .fetchAndApplyBranding(boxId);
+          }
+        }
+        
         // Navigation is handled by the AuthWrapper in main.dart
       } catch (e) {
         setState(() {

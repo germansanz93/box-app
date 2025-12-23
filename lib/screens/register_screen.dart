@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../services/user_service.dart';
+import '../services/box_service.dart';
+import '../providers/branding_provider.dart';
+
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,9 +17,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthService _auth = AuthService();
-  final UserService _userService = UserService();
+  final BoxService _boxService = BoxService();
+  
+  String? _selectedBoxId;
+  List<Map<String, String>> _boxOptions = [];
+
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBoxes();
+  }
+
+  Future<void> _fetchBoxes() async {
+    final boxes = await _boxService.getBoxes();
+    setState(() {
+      _boxOptions = boxes;
+    });
+  }
 
   @override
   void dispose() {
@@ -32,19 +52,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _errorMessage = null;
       });
       try {
-        final userCredential = await _auth.createUserWithEmailAndPassword(
+        await _auth.createUserWithEmailAndPassword(
           _emailController.text.trim(),
           _passwordController.text.trim(),
+          _selectedBoxId!,
         );
 
-        // Create user document in Firestore
-        if (userCredential != null && userCredential.user != null) {
-          await _userService.createUserDocument(userCredential.user!);
-        }
-
-        // Navigator.pop(context) is usually sufficient if we just return to Login
-        // But if AuthWrapper switches to Home, we might need to pop to avoid stacking.
         if (mounted) {
+           // Apply Branding
+           await Provider.of<BrandingProvider>(context, listen: false)
+               .fetchAndApplyBranding(_selectedBoxId!);
+
            Navigator.of(context).pop(); 
         }
       } catch (e) {
@@ -95,6 +113,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 obscureText: true,
                 validator: (value) =>
                     value!.length < 6 ? 'Password must be at least 6 chars' : null,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Select Box'),
+                value: _selectedBoxId,
+                items: _boxOptions.map((box) {
+                  return DropdownMenuItem<String>(
+                    value: box['id'],
+                    child: Text(box['name']!),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedBoxId = value;
+                  });
+                },
+                validator: (value) =>
+                    value == null ? 'Please select a box' : null,
               ),
               const SizedBox(height: 24),
               _isLoading
