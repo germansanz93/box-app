@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -13,6 +14,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthService _auth = AuthService();
+  final UserService _userService = UserService();
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -30,10 +32,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _errorMessage = null;
       });
       try {
-        await _auth.createUserWithEmailAndPassword(
+        final userCredential = await _auth.createUserWithEmailAndPassword(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
+
+        // Create user document in Firestore
+        if (userCredential != null && userCredential.user != null) {
+          await _userService.createUserDocument(userCredential.user!);
+        }
+
         // Navigator.pop(context) is usually sufficient if we just return to Login
         // But if AuthWrapper switches to Home, we might need to pop to avoid stacking.
         if (mounted) {

@@ -1,13 +1,42 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../widgets/dashboard_card.dart';
+import '../services/user_service.dart';
+import 'admin_screen.dart';
 import 'membership_screen.dart';
 import 'training_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  final AuthService _auth = AuthService();
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
-  HomeScreen({super.key});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final AuthService _auth = AuthService();
+  final UserService _userService = UserService();
+  String? _userRole;
+  bool _isLoadingRole = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserRole();
+  }
+
+  Future<void> _fetchUserRole() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final role = await _userService.getUserRole(user.uid);
+      if (mounted) {
+        setState(() {
+          _userRole = role;
+          _isLoadingRole = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,48 +88,66 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: ListView(
-                  children: [
-                    DashboardCard(
-                      title: 'Membresía',
-                      description: 'Estado: ACTIVA\nVence: 15 Oct',
-                      icon: Icons.card_membership,
-                      gradientColors: [Colors.blue, Colors.blueAccent],
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MembershipScreen()),
-                        );
-                      },
-                    ),
-                    DashboardCard(
-                      title: 'Entrenamiento',
-                      description: 'WOD: "Murph"\nRegistra tus marcas',
-                      icon: Icons.fitness_center,
-                      gradientColors: [Colors.orange, Colors.deepOrange],
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const TrainingScreen()),
-                        );
-                      },
-                    ),
-                    DashboardCard(
-                      title: 'Comunidad',
-                      description: 'Próximamente\nNoticias y Eventos',
-                      icon: Icons.groups,
-                      gradientColors: [Colors.purple, Colors.deepPurple],
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Esta sección estará lista pronto!')),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                child: _isLoadingRole
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView(
+                        children: [
+                          if (_userRole == 'admin')
+                            DashboardCard(
+                              title: 'Panel Admin',
+                              description: 'Gestionar Box',
+                              icon: Icons.admin_panel_settings,
+                              gradientColors: [Colors.redAccent, Colors.red],
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const AdminScreen()),
+                                );
+                              },
+                            ),
+                          DashboardCard(
+                            title: 'Membresía',
+                            description: 'Estado: ACTIVA\nVence: 15 Oct',
+                            icon: Icons.card_membership,
+                            gradientColors: [Colors.blue, Colors.blueAccent],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const MembershipScreen()),
+                              );
+                            },
+                          ),
+                          DashboardCard(
+                            title: 'Entrenamiento',
+                            description: 'WOD: "Murph"\nRegistra tus marcas',
+                            icon: Icons.fitness_center,
+                            gradientColors: [Colors.orange, Colors.deepOrange],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const TrainingScreen()),
+                              );
+                            },
+                          ),
+                          DashboardCard(
+                            title: 'Comunidad',
+                            description: 'Próximamente\nNoticias y Eventos',
+                            icon: Icons.groups,
+                            gradientColors: [Colors.purple, Colors.deepPurple],
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Esta sección estará lista pronto!')),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
               ),
             ],
           ),
